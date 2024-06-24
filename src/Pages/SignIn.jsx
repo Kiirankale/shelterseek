@@ -2,14 +2,18 @@ import React from 'react'
 import { useState } from 'react';
 import { IoEyeOff } from "react-icons/io5";
 import { IoEye } from "react-icons/io5";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Oauth from '../components/Oauth';
+import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
+import { toast } from 'react-toastify';
+
 
 export default function SignIn() {
   const [showPassword, setshowPassword] = useState(false)
   function handleShowPassword() {
     setshowPassword(!showPassword)
   }
+  const navigate = useNavigate()
 
   const [formData, setformData] = useState({ email: "", password: "" })
   const { email, password } = formData
@@ -23,6 +27,26 @@ export default function SignIn() {
 
 
   }
+
+  async function onSubmit(e) {
+    e.preventDefault()
+    try {
+      const auth = getAuth();
+      const userCredentials = await signInWithEmailAndPassword(auth, email, password,);
+      if (userCredentials.user) {
+        navigate("/")
+        toast.success("signed-In succesfully")
+
+      }
+
+
+
+    } catch (error) {
+      toast.error("something went wrong")
+
+    }
+
+  }
   return (
     <>
       <section>
@@ -32,7 +56,7 @@ export default function SignIn() {
             <img className='w-full rounded-2xl' src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=773&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="key" />
           </div>
           <div className='w-full md:w-[67%] lg:w-[40%] lg:ml-14' >
-            <form  >
+            <form onSubmit={onSubmit} >
               <input className='w-full mb-6 px-4 py-2 text-2xl text-gray-400 bg-white border-gray-300 rounded transition ease-in-out' type="email" name="email" id="email" value={email} onChange={onChange} placeholder='Email address' />
               <div className='relative mb-6'>
                 <input className='w-full px-4 py-2 text-2xl text-gray-400 bg-white border-gray-300 rounded transition ease-in-out' type={showPassword ? "text" : "password"} name="password" id="password" value={password} onChange={onChange} placeholder='password' />
@@ -46,7 +70,7 @@ export default function SignIn() {
               <div className='my-4 before:border-t flex before:flex-1 items-center before:border-gray-300 after:border-t after:flex-1  after:border-gray-300 '>
                 <p className='text-center font-semibold mx-4'>OR</p>
               </div>
-            <Oauth/>
+              <Oauth />
             </form>
 
 
