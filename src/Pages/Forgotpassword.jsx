@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { Link } from 'react-router-dom';
 import Oauth from '../components/Oauth';
+import { getAuth,sendPasswordResetEmail } from 'firebase/auth';
+import { toast } from 'react-toastify';
 
 export default function Forgotpassword() {
 
@@ -14,10 +16,20 @@ export default function Forgotpassword() {
 
   function onChange(e) {
     setemail(e.target.value)
-   
-
-
+  
   }
+  async function onSubmit(e){
+    e.preventDefault()
+    try {
+       const auth = getAuth()
+       await sendPasswordResetEmail(auth,email)
+       toast.success("reset password email has been sent succesfully")
+    } catch (error) {
+      toast.error("incorrect email id ")
+      
+    }
+  }
+
   return (
     <>
       <section>
@@ -27,7 +39,7 @@ export default function Forgotpassword() {
             <img className='w-full rounded-2xl' src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=773&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="key" />
           </div>
           <div className='w-full md:w-[67%] lg:w-[40%] lg:ml-14' >
-            <form  >
+            <form  onSubmit={onSubmit} >
               <input className='w-full mb-6 px-4 py-2 text-2xl text-gray-400 bg-white border-gray-300 rounded transition ease-in-out' type="email" name="email" id="email" value={email} onChange={onChange} placeholder='Email address' />
 
               <div className='flex justify-between whitespace-nowrap text-sm sm:text-lg mb-3'>
