@@ -23,7 +23,7 @@ export default function SignIn() {
       ...prevState, [e.target.id]: e.target.value
 
     }))
-    console.log(formData);
+    
 
 
   }
