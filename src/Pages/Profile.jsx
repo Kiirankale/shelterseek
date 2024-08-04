@@ -1,4 +1,4 @@
-import { getAuth,  updateProfile } from 'firebase/auth';
+import { getAuth, updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import React from 'react'
 import { useState } from 'react'
@@ -6,6 +6,7 @@ import { FcHome } from "react-icons/fc";
 import { useNavigate } from 'react-router';
 import { toast } from 'react-toastify';
 import { db } from "../firebase";
+import { Link } from 'react-router-dom';
 
 
 export default function Profile() {
@@ -36,7 +37,7 @@ export default function Profile() {
 
         // update name in firestore
         const docRef = doc(db, "users", auth.currentUser.uid)
-        console.log(db)
+
 
         await updateDoc(docRef, {
           name,
@@ -73,12 +74,14 @@ export default function Profile() {
               }} className='text-red-600 cursor-pointer hover:text-red-700'>{changeDetails ? "Apply changes" : "Edit"}</span></p>
               <p onClick={handleLogOut} className='text-blue-500 cursor-pointer hover:to-blue-700'>Sign out</p>
             </div>
-            <button className='w-full flex justify-center items-center gap-3 bg-blue-600 mt-4 py-3 text-white uppercase'><FcHome className='block bg-white rounded-full text-2xl' /> Sell your property</button>
+
 
           </form>
+          <button className='w-full  bg-blue-600 mt-4 py-3 px-7 rounded-sm text-white uppercase'><Link to={"/create-listing"} className='flex justify-center items-center'><FcHome className=' bg-red-200 mr-2 rounded-full text-3xl p-1 border-2' /> Sell your property</Link></button>
 
         </div>
       </section>
+
     </>
   )
 }
