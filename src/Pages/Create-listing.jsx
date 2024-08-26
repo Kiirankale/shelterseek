@@ -1,7 +1,22 @@
 import React from 'react'
 import { useState } from 'react'
+import Spinner from '../components/Spinner';
+import { toast } from 'react-toastify';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { getAuth } from 'firebase/auth';
+import { v4 as uuidv4 } from 'uuid';
+import { db } from "../firebase.js"
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { useNavigate } from 'react-router';
 
 export default function CreateListing() {
+    const navigate = useNavigate();
+    const auth = getAuth();
+    
+
+
+    const [geolocationEnabled, setgeolocationEnabled] = useState(true);
+    const [loading, setloading] = useState(false)
     const [formData, setformData] = useState({
         type: "rent",
         name: "",
@@ -13,8 +28,11 @@ export default function CreateListing() {
         description: "",
         offer: false,
         regularPrice: 0,
-        discountedPrice: 0
-    })
+        discountedPrice: 0,
+        latitude: 0,
+        longitude: 0,
+        images: {}
+    });
     const {
         type,
         name,
@@ -26,17 +44,214 @@ export default function CreateListing() {
         description,
         offer,
         regularPrice,
-        discountedPrice
-    } = formData
+        discountedPrice,
+        latitude,
+        longitude,
+        images
+    } = formData;
 
-    function onChange() {
+    function onChange(e) {
+        let boolean = null;
+        if (e.target.value === "true") {
+            boolean = true;
+        }
+        if (e.target.value === "false") {
+            boolean = false;
+        }
+
+        // for handling images
+        if (e.target.files) {
+            setformData((prevState) => ({
+                ...prevState,
+                images: e.target.files,
+            }));
+        }
+
+        if (e.target.id === "latitude" || e.target.id === "longitude") {
+            setformData((prevState) => ({
+                ...prevState,
+                [e.target.id]: parseFloat(e.target.value)
+            }));
+        } // Text/Boolean/Number
+        if (!e.target.files) {
+            setformData((prevState) => ({
+                ...prevState,
+                [e.target.id]: boolean ?? e.target.value,
+            }));
+        }
+    }
+
+    async function onSubmit(e) {
+        e.preventDefault();
+        setloading(true);
+
+        // Validate prices
+        if(regularPrice<=0){
+            setloading(false);
+            toast.error("Please enter regular price");
+            return;
+
+        }
+        if (+discountedPrice >= +regularPrice) {
+            setloading(false);
+            toast.error("Discounted price is more than regular price");
+            return;
+        }
+
+        // Validate image count
+        if (images instanceof FileList && images.length > 6) {
+            setloading(false);
+            toast.error("Images are more than required");
+            return;
+        }
+
+        let geolocation = {};
+        let location;
+
+        if (geolocationEnabled) {
+            // Use the API URL directly without environment variable
+            const apiUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
+            const response = await fetch(apiUrl);
+
+            // Check if response is OK
+            if (!response.ok) {
+                setloading(false);
+                toast.error("Failed to fetch location data");
+                return;
+            }
+
+            // Parse the JSON response
+            const data = await response.json();
+
+
+
+            // Ensure the data is an array and has elements
+            if (Array.isArray(data) && data.length > 0) {
+                geolocation.lat = data[0].lat;
+                geolocation.lon = data[0].lon;
+
+                location = geolocation.lat || geolocation.lon ? true : undefined;
+
+
+
+            } else {
+                location = undefined;
+            }
+
+            // Check if location is undefined
+            if (location === undefined) {
+                setloading(false);
+                toast.error("Please enter a correct address");
+                return;
+            }
+        } else {
+            // Use manually entered latitude and longitude if geolocation is disabled
+            geolocation.lat = latitude;
+            geolocation.lon = longitude;
+        }
+
+
+        async function storeImage(image) {
+            
+            return new Promise((resolve, reject) => {
+
+
+                const storage = getStorage();
+                const filename = `${auth.currentUser.uid}-${image.name}-${uuidv4()}`;
+               
+                
+                const storageRef = ref(storage, filename);
+                const uploadTask =  uploadBytesResumable(storageRef, image);
+                
+                
+                uploadTask.on(
+                    "state_changed",
+                    (snapshot) => {
+                        // Observe state change events such as progress, pause, and resume
+                        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+                        const progress =
+                            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log("Upload is " + progress + "% done");
+                        switch (snapshot.state) {
+                            case "paused":
+                                console.log("Upload is paused");
+                                break;
+                            case "running":
+                                console.log("Upload is running");
+                                break;
+                        }
+                    },
+                    (error) => {
+                        // Handle unsuccessful uploads
+                        reject(error);
+                    },
+                    () => {
+                        // Handle successful uploads on complete
+                        // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+                        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                            resolve(downloadURL);
+                        });
+                    }
+                );
+            });
+        }
+
+        
+
+
+        const imgUrls = await Promise.all(
+            [...images].map((image) => storeImage(image))
+        ).catch((error) => {
+            setloading(false);
+            toast.error("Images not uploaded");
+            return;
+        });
+        
+
+        
+       
+        
+
+        const formDataCopy = {
+            ...formData,
+            imgUrls,
+            geolocation,
+            timestamp: serverTimestamp(),
+
+        };
+
+
+        delete formDataCopy.images;
+        !formDataCopy.offer && delete formDataCopy.discountedPrice;
+        delete formDataCopy.latitude;
+        delete formDataCopy.longitude;
+        console.log(formDataCopy)
+        const docRef = await addDoc(collection(db, "listings"), formDataCopy);
+        
+        setloading(false);
+        toast.success("Listing created");
+        
+        
+        navigate(`/category/${formDataCopy.type}/${docRef.id}`);
+
+        
 
     }
 
+
+
+
+
+    if (loading) {
+        return <Spinner />
+    }
+
+
     return (
+
         <main className='max-w-md px-2 mx-auto'>
             <h1 className='text-center text-3xl font-bold mt-6'>Create Listing</h1>
-            <form >
+            <form onSubmit={onSubmit} >
                 <p className='text-lg font-semibold mt-6'>Sell/Rent</p>
                 <div className='flex'>
                     <button
@@ -156,6 +371,18 @@ export default function CreateListing() {
                     required
                     className="w-full px-4 py-2 text-xl text-gray-700 bg-white border border-gray-300 rounded transition duration-150 ease-in-out focus:text-gray-700 focus:bg-white focus:border-slate-600 focus:border-2 mb-6 focus:outline-none focus:ring-0"
                 />
+                {!geolocationEnabled && (
+                    <div className='flex mb-6 space-x-6 '>
+                        <div >
+                            <p className='font-semibold text-lg'>Latitude</p>
+                            <input type="number" id="latitude" value={latitude} onChange={onChange} required min="-90" max="90" className='w-full px-4 py-2 text-gray-700 text-xl rounded  focus:border-slate-600 focus:border-2  focus:outline-none focus:ring-0 transition duration-150 ease-in-out' />
+                        </div>
+                        <div>
+                            <p className='font-semibold text-lg'>Longitude</p>
+                            <input type="number" id="longitude" value={longitude} onChange={onChange} required min="-180" max="180" className='w-full px-4 py-2 text-gray-700 text-xl rounded  focus:border-slate-600 focus:border-2  focus:outline-none focus:ring-0 transition duration-150 ease-in-out' />
+                        </div>
+                    </div>
+                )}
                 <p className='text-lg font-semibold '>Description</p>
                 <textarea
                     type="text"
@@ -230,7 +457,7 @@ export default function CreateListing() {
                     <p className='text-gray-600'>The first image will be cover(max 6)</p>
                     <input type="file" id='images' accept='.jpg,.png,.jpeg' onChange={onChange} className="w-full px-3 py-1.5 text-gray-700 bg-white border border-gray-300  focus:border-slate-600 focus:border-2  focus:outline-none focus:ring-0 transition duration-150 ease-in-out rounded" multiple required />
                 </div>
-                <button type='submit' className=' w-full bg-blue-600 mb-6 px-7 py-3 text-white font-medium uppercase text-sm rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:shadow-lg transition duration-150 ease-in-out'>Create listing</button>
+                <button type='submit' className=' w-full bg-blue-600 mb-6 px-7 py-3 text-white font-medium uppercase text-sm rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:shadow-lg transition duration-150 ease-in-out'  >Create listing</button>
 
             </form>
         </main>
