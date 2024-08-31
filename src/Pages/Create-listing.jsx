@@ -217,6 +217,7 @@ export default function CreateListing() {
             imgUrls,
             geolocation,
             timestamp: serverTimestamp(),
+            userRef: auth.currentUser.uid,
 
         };
 
