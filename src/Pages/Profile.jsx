@@ -1,5 +1,5 @@
 import { getAuth, updateProfile } from 'firebase/auth';
-import { collection, doc, query, updateDoc, orderBy, where, getDocs } from 'firebase/firestore';
+import { collection, doc, query, updateDoc, orderBy, where, getDocs, deleteDoc } from 'firebase/firestore';
 import React from 'react'
 import { useState, useEffect } from 'react'
 import { FcHome } from "react-icons/fc";
@@ -86,6 +86,21 @@ export default function Profile() {
 
   }, [auth.currentUser.uid])
 
+  async function onDelete(listingID) {
+    if (window.confirm("Are you sure you want to delete?")) {
+      await deleteDoc(doc(db, "listings", listingID));
+      const updatedListings = listings.filter(
+        (listing) => listing.id !== listingID
+      );
+      setListings(updatedListings);
+      toast.success("Successfully deleted the listing");
+    }
+  }
+  function onEdit(listingID){
+    navigate(`/edit-listing/${listingID}`)
+    
+  }
+
 
 
   return (
@@ -115,23 +130,34 @@ export default function Profile() {
       </section>
 
 
-<div className='max-w-6xl mt-6 px-3 mx-auto'>
-{
-        !loading && listings.length>0 &&(
-          <>
-            <h1 className='text-2xl font-semibold text-center mt-6'> My Listing</h1>
-            <ul>
-              {listings.map((listing)=>{
-                return <ListingItem key={listing.id} id={listing.id} listing={listing.data}  />
-              })}
+      <div className='max-w-6xl mt-6 px-3 mx-auto '>
+        {
+          !loading && listings.length > 0 && (
+            <>
+              <h1 className='text-2xl font-semibold text-center mt-6'> My Listing</h1>
+              <ul className='sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 mt-6 mb-6'>
+               {listings.map((listing)=>{
+                return (
+                  <ListingItem key={listing.id} id={listing.id} listing={listing.data} onDelete={()=>{
+                    onDelete(listing.id)
+                  }}
+                  onEdit={()=>{
+                    onEdit(listing.id)
+                  }}
+                  />
+                );
+
+               })}
+                  
+                
             </ul>
 
-          </>
-        )
-      }
+            </>
+          )
+        }
 
-</div>
-     
+      </div>
+
 
     </>
   )
