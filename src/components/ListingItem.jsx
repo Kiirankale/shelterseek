@@ -32,7 +32,7 @@ function ListingItem({ listing, id ,onDelete,onEdit}) {
                     </div>
                 </div>
             </Link>
-            {onEdit && (<MdEdit className='absolute right-7 bottom-2 cursor-pointer h-4' onClick={onEdit(listing.id)} />)}
+            {onEdit && (<MdEdit className='absolute right-7 bottom-2 cursor-pointer h-4' onClick={()=>{onEdit(listing.id)}} />)}
 
 
             {onDelete && <MdDelete className='absolute right-2 bottom-2 cursor-pointer h-[14px]  text-red-600' onClick={()=>{onDelete(listing.id)}} /> }
