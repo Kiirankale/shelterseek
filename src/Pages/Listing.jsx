@@ -4,16 +4,28 @@ import { useParams } from 'react-router';
 import { db } from '../firebase';
 import Spinner from "../components/Spinner";
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { EffectFade, Autoplay, Navigation, Pagination } from 'swiper/modules'; 
+import { EffectFade, Autoplay, Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { FaShare } from "react-icons/fa";
 
 export default function Listings() {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+  const [shareLinkCopied, setshareLinkCopied] = useState(false)
+  const handleShareLink = () => {
+    navigator.clipboard.writeText(window.location.href)
+    setshareLinkCopied(true)
+    setTimeout(() => {
+      setshareLinkCopied(false)
+    }, 2000);
+
+  }
+
+
+
   const params = useParams();
 
   useEffect(() => {
@@ -23,7 +35,7 @@ export default function Listings() {
       if (docSnap.exists()) {
         setListing(docSnap.data());
         setLoading(false);
-       
+
       }
     }
 
@@ -35,14 +47,14 @@ export default function Listings() {
   }
 
   return (
-    <main>
+    <main >
       <Swiper
         slidesPerView={1}
         navigation
         pagination={{ type: "progressbar" }}
         effect="fade"
         autoplay={{ delay: 3000 }}
-        modules={[EffectFade, Navigation, Pagination, Autoplay]} 
+        modules={[EffectFade, Navigation, Pagination, Autoplay]}
       >
         {listing.imgUrls.map((url, index) => (
           <SwiperSlide key={index}>
@@ -57,6 +69,13 @@ export default function Listings() {
           </SwiperSlide>
         ))}
       </Swiper>
+      <div className='fixed top-[13%] right-[3%] bg-white z-10 cursor-pointer border-gray-400 rounded-full w-12 h-12 flex justify-center items-center'
+        onClick={handleShareLink}>
+        <FaShare className='text-lg text-slate-500' />
+
+      </div>
+      {shareLinkCopied && (<p className="fixed top-[23%] right-[4%] font-semibold border-2 border-gray-400 rounded-md bg-white z-10 p-2">Link copied</p>)}
+
     </main>
   );
 }
