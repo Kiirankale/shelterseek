@@ -1,7 +1,6 @@
-/* src/styles.css */
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body{
     background-color: rgb(240, 253, 244);
@@ -15,3 +14,13 @@ body{
 .swiper-pagination-progressbar .swiper-pagination-progressbar-fill{
     background: #a8dadc !important
 }
+
+html::-webkit-scrollbar{
+    display: none;
+}
+
+html{
+    scrollbar-width: none;
+}
+
+

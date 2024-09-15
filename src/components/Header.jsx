@@ -22,7 +22,7 @@ export default function Header() {
     })
    
    
-  }, [])
+  }, [auth])
   
   
 

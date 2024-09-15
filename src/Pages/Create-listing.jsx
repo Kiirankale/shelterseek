@@ -429,7 +429,7 @@ export default function CreateListing() {
 
                         <div className='flex items-center space-x-7'>
                             <div><input type="number" name="" id="regularPrice" value={regularPrice} onChange={onChange} className='w-full px-4 py-2 text-gray-700 text-xl rounded  focus:border-slate-600 focus:border-2  focus:outline-none focus:ring-0 transition duration-150 ease-in-out ' required /></div>
-                            {type == "rent" && <div className='whitespace-nowrap'>&#8377;/Month</div>}
+                            {type === "rent" && <div className='whitespace-nowrap'>&#8377;/Month</div>}
 
                         </div>
                     </div>
@@ -442,7 +442,7 @@ export default function CreateListing() {
 
                         <div className=' w-full flex items-center justify-center space-x-6 '>
                             <div><input type="number" name="" id="discountedPrice" value={discountedPrice} onChange={onChange} className='w-full px-4 py-2 text-gray-700 text-xl rounded  focus:border-slate-600 focus:border-2  focus:outline-none focus:ring-0 transition duration-150 ease-in-out ' required={offer} /></div>
-                            {type == "rent" && <div className='whitespace-nowrap'>&#8377;/Month</div>}
+                            {type === "rent" && <div className='whitespace-nowrap'>&#8377;/Month</div>}
 
                         </div>
                     </div>
