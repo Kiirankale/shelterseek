@@ -68,6 +68,12 @@ export default function Listing() {
   const latitude = listing?.geolocation?.lat ? parseFloat(listing.geolocation.lat) : null;
   const longitude = listing?.geolocation?.lon ? parseFloat(listing.geolocation.lon) : null;
 
+  // Calculate final price and discount amount if offer exists
+  const finalPrice = listing.offer
+    ? listing.regularPrice - listing.discountedPrice
+    : listing.regularPrice;
+  const discountAmount = listing.offer ? listing.regularPrice - finalPrice : null;
+
   return (
     <main>
       <Swiper
@@ -112,30 +118,63 @@ export default function Listing() {
       <div className="m-4 flex flex-col md:flex-row max-w-6xl lg:mx-auto p-4 rounded-lg shadow-lg bg-white lg:space-x-5">
         <div className="w-full">
           <p className="text-2xl font-bold mb-3 text-blue-900">
-            {listing.name} - ${' '}
-            {listing.offer
-              ? listing.discountedPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-              : listing.regularPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+            {listing.name} - ₹{' '}
+            {listing.offer ? (
+              <>
+                {/* Regular price with line-through */}
+                <span className="text-gray-500 line-through">
+                  {listing.regularPrice
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                </span>{' '}
+                {/* Final price after discount */}
+                <span className="text-green-600">
+                  ₹{' '}
+                  {finalPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                </span>
+              </>
+            ) : (
+              // Just regular price if no offer
+              listing.regularPrice
+                .toString()
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            )}
             {listing.type === 'rent' ? ' / month' : ''}
           </p>
+
+          {listing.offer && (
+            <p className="text-green-800 font-bold">
+              You will save ₹{' '}
+              {discountAmount
+                .toString()
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ',')}!
+            </p>
+          )}
+
           <p className="flex items-center mt-6 mb-3 font-semibold">
             <FaMapMarkerAlt className="text-green-700 mr-1" />
             {listing.address}
           </p>
+
           <div className="flex justify-start items-center space-x-4 w-[75%]">
             <p className="bg-red-800 w-full max-w-[200px] rounded-md p-1 text-white text-center font-semibold shadow-md">
               {listing.type === 'rent' ? 'Rent' : 'Sale'}
             </p>
             {listing.offer && (
               <p className="w-full max-w-[200px] bg-green-800 rounded-md p-1 text-white text-center font-semibold shadow-md">
-                ${+listing.regularPrice - +listing.discountedPrice} discount
+                ₹
+                {(
+                  listing.discountedPrice
+                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')} discount
               </p>
             )}
           </div>
+
           <p className="mt-3 mb-3">
             <span className="font-semibold">Description - </span>
             {listing.description}
           </p>
+
           <ul className="flex items-center space-x-2 sm:space-x-10 text-sm font-semibold mb-6">
             <li className="flex items-center whitespace-nowrap">
               <FaBed className="text-lg mr-1" />
@@ -154,16 +193,18 @@ export default function Listing() {
               {listing.furnished ? 'Furnished' : 'Not furnished'}
             </li>
           </ul>
+
           {listing.userRef !== auth.currentUser?.uid && !contactLandlord && (
             <div className="mt-6">
               <button
                 onClick={() => setContactLandlord(true)}
-                className="px-7 py-3 bg-blue-600 text-white font-medium text-sm uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg w-full text-center transition duration-150 ease-in-out "
+                className="px-7 py-3 bg-blue-600 text-white font-medium text-sm uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg w-full text-center transition duration-150 ease-in-out"
               >
                 Contact Landlord
               </button>
             </div>
           )}
+
           {contactLandlord && <Contact userRef={listing.userRef} listing={listing} />}
         </div>
 

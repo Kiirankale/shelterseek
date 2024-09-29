@@ -40,8 +40,8 @@ export default function Contact({ userRef, listing }) {
             ></textarea>
           </div>
           <a
-            href={`mailto:${landlord.email}?Subject=${listing.name}&body=${message}`}
-          >
+  href={`mailto:${landlord.email}?subject=${encodeURIComponent(listing.name)}&body=${encodeURIComponent(message)}`}
+>
             <button className="px-7 py-3 bg-blue-600 text-white rounded text-sm uppercase shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out w-full text-center mb-6" type="button">
               Send Message
             </button>
